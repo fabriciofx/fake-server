@@ -1,0 +1,10 @@
+.vscode/
+target/
+.idea/
+.mvn/
+.DS_Store
+*.iml
+.project
+.settings
+.classpath
+.recommenders

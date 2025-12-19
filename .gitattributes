@@ -1,0 +1,5 @@
+# SPDX-FileCopyrightText: Copyright (C) 2025 Fabrício Barros Cabral
+# SPDX-License-Identifier: MIT
+* text=auto eol=lf
+*.properties -text
+*.sql -text
