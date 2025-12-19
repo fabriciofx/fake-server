@@ -5,7 +5,6 @@
 package com.github.fabriciofx.fake.server.db.script;
 
 import com.github.fabriciofx.fake.server.Script;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.Reader;
@@ -15,6 +14,9 @@ import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
+import org.cactoos.Input;
+import org.cactoos.Text;
+import org.cactoos.io.InputOf;
 
 /**
  * Read and execute a SQL Script.
@@ -26,14 +28,23 @@ public final class SqlScript implements Script<Connection> {
     /**
      * Input.
      */
-    private final InputStream input;
+    private final Input input;
 
     /**
      * Ctor.
      *
-     * @param npt The SQL Script file
+     * @param sql The SQL code
      */
-    public SqlScript(final InputStream npt) {
+    public SqlScript(final Text sql) {
+        this(new InputOf(sql));
+    }
+
+    /**
+     * Ctor.
+     *
+     * @param npt The SQL Script input
+     */
+    public SqlScript(final Input npt) {
         this.input = npt;
     }
 
@@ -47,7 +58,7 @@ public final class SqlScript implements Script<Connection> {
         final List<String> lines = new LinkedList<>();
         try (
             Reader reader = new InputStreamReader(
-                this.input,
+                this.input.stream(),
                 StandardCharsets.UTF_8
             )
         ) {
@@ -71,8 +82,8 @@ public final class SqlScript implements Script<Connection> {
             joiner.add(line);
         }
         final String[] cmds = joiner.toString().split(";");
-        for (final String cmd : cmds) {
-            try (Statement stmt = connection.createStatement()) {
+        try (Statement stmt = connection.createStatement()) {
+            for (final String cmd : cmds) {
                 final String sql = cmd.trim();
                 stmt.execute(sql);
             }

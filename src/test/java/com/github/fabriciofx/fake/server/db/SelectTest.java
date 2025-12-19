@@ -4,7 +4,9 @@
  */
 package com.github.fabriciofx.fake.server.db;
 
+import com.github.fabriciofx.fake.server.Script;
 import com.github.fabriciofx.fake.server.Servers;
+import com.github.fabriciofx.fake.server.db.script.SqlScript;
 import com.github.fabriciofx.fake.server.db.server.H2Server;
 import com.github.fabriciofx.fake.server.db.server.MysqlServer;
 import com.github.fabriciofx.fake.server.db.server.PgsqlServer;
@@ -30,27 +32,25 @@ import org.junit.jupiter.api.Test;
 final class SelectTest {
     @Test
     void select() throws Exception {
+        final Script<Connection> script = new SqlScript(
+            new Joined(
+                " ",
+                "CREATE TABLE employee (id INT,",
+                "name VARCHAR(50), birthday DATE,",
+                "address VARCHAR(100),",
+                "married BOOLEAN, salary DECIMAL(20,2),",
+                "PRIMARY KEY (id))"
+            )
+        );
         try (
             Servers<Connection> servers = new Servers<>(
-                new H2Server(),
-                new MysqlServer(),
-                new PgsqlServer()
+                new H2Server(script),
+                new MysqlServer(script),
+                new PgsqlServer(script)
             )
         ) {
             for (final Connection connection : servers.resources()) {
                 try (connection) {
-                    try (PreparedStatement update = connection.prepareStatement(
-                        new Joined(
-                            " ",
-                            "CREATE TABLE employee (id INT,",
-                            "name VARCHAR(50), birthday DATE,",
-                            "address VARCHAR(100),",
-                            "married BOOLEAN, salary DECIMAL(20,2),",
-                            "PRIMARY KEY (id))"
-                        ).asString()
-                    )) {
-                        update.execute();
-                    }
                     try (PreparedStatement insert = connection.prepareStatement(
                         new Joined(
                             " ",
