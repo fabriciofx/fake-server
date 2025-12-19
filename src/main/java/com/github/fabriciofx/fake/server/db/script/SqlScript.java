@@ -14,6 +14,7 @@ import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.StringJoiner;
+import javax.sql.DataSource;
 import org.cactoos.Input;
 import org.cactoos.Text;
 import org.cactoos.io.InputOf;
@@ -24,7 +25,7 @@ import org.cactoos.io.InputOf;
  * @since 0.0.1
  */
 @SuppressWarnings("PMD.UnnecessaryLocalRule")
-public final class SqlScript implements Script<Connection> {
+public final class SqlScript implements Script<DataSource> {
     /**
      * Input.
      */
@@ -49,12 +50,12 @@ public final class SqlScript implements Script<Connection> {
     }
 
     /**
-     * Execute this Script on the connection.
+     * Execute this Script on the data source.
      *
-     * @param connection The connection
+     * @param source The data source
      * @throws Exception if fails
      */
-    public void run(final Connection connection) throws Exception {
+    public void run(final DataSource source) throws Exception {
         final List<String> lines = new LinkedList<>();
         try (
             Reader reader = new InputStreamReader(
@@ -82,10 +83,12 @@ public final class SqlScript implements Script<Connection> {
             joiner.add(line);
         }
         final String[] cmds = joiner.toString().split(";");
-        try (Statement stmt = connection.createStatement()) {
-            for (final String cmd : cmds) {
-                final String sql = cmd.trim();
-                stmt.execute(sql);
+        try (Connection connection = source.getConnection()) {
+            try (Statement stmt = connection.createStatement()) {
+                for (final String cmd : cmds) {
+                    final String sql = cmd.trim();
+                    stmt.execute(sql);
+                }
             }
         }
     }

@@ -7,9 +7,10 @@ package com.github.fabriciofx.fake.server.db.server;
 import com.github.fabriciofx.fake.server.Script;
 import com.github.fabriciofx.fake.server.Server;
 import com.github.fabriciofx.fake.server.db.script.EmptySqlScript;
+import com.github.fabriciofx.fake.server.db.source.MysqlSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
+import org.cactoos.text.TextOf;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -19,7 +20,7 @@ import org.testcontainers.utility.DockerImageName;
  *
  * @since 0.0.1
  */
-public final class MysqlServer implements Server<Connection> {
+public final class MysqlServer implements Server<DataSource> {
     /**
      * The container.
      */
@@ -28,7 +29,7 @@ public final class MysqlServer implements Server<Connection> {
     /**
      * SQL Script to initialize the database.
      */
-    private final Script<Connection> script;
+    private final Script<DataSource> script;
 
     /**
      * Ctor.
@@ -42,7 +43,7 @@ public final class MysqlServer implements Server<Connection> {
      *
      * @param script SQL Script to initialize the database
      */
-    public MysqlServer(final Script<Connection> script) {
+    public MysqlServer(final Script<DataSource> script) {
         this.container = new MySQLContainer<>(
             DockerImageName
                 .parse("mysql/mysql-server:latest")
@@ -63,9 +64,9 @@ public final class MysqlServer implements Server<Connection> {
     }
 
     @Override
-    public Connection resource() throws Exception {
-        return DriverManager.getConnection(
-            this.container.getJdbcUrl(),
+    public DataSource resource() throws Exception {
+        return new MysqlSource(
+            new TextOf(this.container.getJdbcUrl()),
             this.container.getUsername(),
             this.container.getPassword()
         );

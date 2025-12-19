@@ -12,8 +12,9 @@ import com.github.fabriciofx.fake.server.db.source.H2Source;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import javax.sql.DataSource;
+import org.cactoos.Scalar;
 import org.cactoos.scalar.Sticky;
-import org.cactoos.scalar.Unchecked;
 
 /**
  * H2 server, for unit testing.
@@ -22,16 +23,16 @@ import org.cactoos.scalar.Unchecked;
  * @checkstyle IllegalCatchCheck (500 lines)
  */
 @SuppressWarnings("PMD.AvoidCatchingGenericException")
-public final class H2Server implements Server<Connection> {
+public final class H2Server implements Server<DataSource> {
     /**
-     * The Database name.
+     * The Database source.
      */
-    private final Unchecked<String> dbname;
+    private final Scalar<DataSource> source;
 
     /**
      * SQL Script to initialize the database.
      */
-    private final Script<Connection> script;
+    private final Script<DataSource> script;
 
     /**
      * Ctor.
@@ -42,13 +43,12 @@ public final class H2Server implements Server<Connection> {
 
     /**
      * Ctor.
+     *
      * @param script SqlScript to initialize the database.
      */
-    public H2Server(final Script<Connection> script) {
-        this.dbname = new Unchecked<>(
-            new Sticky<>(
-                () -> new RandomName().asString()
-            )
+    public H2Server(final Script<DataSource> script) {
+        this.source = new Sticky<>(
+            () -> new H2Source(new RandomName().asString())
         );
         this.script = script;
     }
@@ -60,7 +60,7 @@ public final class H2Server implements Server<Connection> {
 
     @Override
     public void stop() throws Exception {
-        try (Connection connection = this.resource()) {
+        try (Connection connection = this.resource().getConnection()) {
             try (
                 PreparedStatement shutdown = connection.prepareStatement(
                     "SHUTDOWN"
@@ -72,8 +72,8 @@ public final class H2Server implements Server<Connection> {
     }
 
     @Override
-    public Connection resource() throws Exception {
-        return new H2Source(this.dbname.value()).getConnection();
+    public DataSource resource() throws Exception {
+        return this.source.value();
     }
 
     @Override

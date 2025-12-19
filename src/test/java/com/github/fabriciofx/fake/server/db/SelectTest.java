@@ -13,6 +13,7 @@ import com.github.fabriciofx.fake.server.db.server.PgsqlServer;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import javax.sql.DataSource;
 import org.cactoos.Text;
 import org.cactoos.text.FormattedText;
 import org.cactoos.text.Joined;
@@ -32,7 +33,7 @@ import org.junit.jupiter.api.Test;
 final class SelectTest {
     @Test
     void select() throws Exception {
-        final Script<Connection> script = new SqlScript(
+        final Script<DataSource> script = new SqlScript(
             new Joined(
                 " ",
                 "CREATE TABLE employee (id INT,",
@@ -43,14 +44,14 @@ final class SelectTest {
             )
         );
         try (
-            Servers<Connection> servers = new Servers<>(
+            Servers<DataSource> servers = new Servers<>(
                 new H2Server(script),
                 new MysqlServer(script),
                 new PgsqlServer(script)
             )
         ) {
-            for (final Connection connection : servers.resources()) {
-                try (connection) {
+            for (final DataSource source : servers.resources()) {
+                try (Connection connection =  source.getConnection()) {
                     try (PreparedStatement insert = connection.prepareStatement(
                         new Joined(
                             " ",

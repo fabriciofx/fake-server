@@ -11,76 +11,132 @@ import java.sql.SQLException;
 import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 import javax.sql.DataSource;
+import org.cactoos.Text;
 import org.cactoos.scalar.Solid;
 import org.cactoos.scalar.Unchecked;
+import org.cactoos.text.Concatenated;
 import org.cactoos.text.FormattedText;
-import org.cactoos.text.Joined;
 
 /**
  * MySQL datasource, for unit testing.
  *
  * @since 0.0.1
+ * @checkstyle ParameterNumberCheck (500 lines)
  */
 public final class MysqlSource implements DataSource {
+    /**
+     * Default port.
+     */
+    private static final int PORT = 3306;
+
     /**
      * Origin DataSource.
      */
     private final Unchecked<MysqlDataSource> origin;
 
     /**
-     * Ctor.
-     * @param dbname Database name
+     * Default username.
      */
-    public MysqlSource(final String dbname) {
-        this("localhost", dbname);
+    private final String uname;
+
+    /**
+     * Default password.
+     */
+    private final String pass;
+
+    /**
+     * Ctor.
+     *
+     * @param dbname Database name
+     * @param username Default username
+     * @param password Default password
+     */
+    public MysqlSource(
+        final String dbname,
+        final String username,
+        final String password
+    ) {
+        this("localhost", dbname, username, password);
     }
 
     /**
      * Ctor.
+     *
      * @param hostname Server hostname or IPv4 Address
      * @param dbname Database name
+     * @param username Default username
+     * @param password Default password
      */
-    public MysqlSource(final String hostname, final String dbname) {
-        // @checkstyle MagicNumber (1 line)
-        this(hostname, 3306, dbname);
+    public MysqlSource(
+        final String hostname,
+        final String dbname,
+        final String username,
+        final String password
+    ) {
+        this(hostname, MysqlSource.PORT, dbname, username, password);
     }
 
     /**
      * Ctor.
+     *
      * @param hostname Server hostname or IPv4 Address
      * @param port Server port
      * @param dbname Database name
+     * @param username Default username
+     * @param password Default password
      */
     public MysqlSource(
         final String hostname,
         final int port,
-        final String dbname
+        final String dbname,
+        final String username,
+        final String password
+    ) {
+        this(
+            new FormattedText(
+                "jdbc:mysql://%s:%d/%s",
+                hostname,
+                port,
+                dbname
+            ),
+            username,
+            password
+        );
+    }
+
+    /**
+     * Ctor.
+     *
+     * @param url JDBC url
+     * @param username Default username
+     * @param password Default password
+     */
+    public MysqlSource(
+        final Text url,
+        final String username,
+        final String password
     ) {
         this.origin = new Unchecked<>(
             new Solid<>(
                 () -> {
                     final MysqlDataSource mds = new MysqlDataSource();
                     mds.setUrl(
-                        new FormattedText(
-                            new Joined(
-                                "",
-                                "jdbc:mysql://%s:%d/%s?useSSL=false",
-                                "&useTimezone=true&serverTimezone=UTC"
-                            ),
-                            hostname,
-                            port,
-                            dbname
+                        new Concatenated(
+                            url.asString(),
+                            "?useSSL=false&useTimezone=true&serverTimezone=UTC"
                         ).asString()
                     );
                     return mds;
                 }
             )
         );
+        this.uname = username;
+        this.pass = password;
     }
 
     @Override
     public Connection getConnection() throws SQLException {
-        return this.origin.value().getConnection();
+        return this.origin.value().getConnection(this.uname, this.pass);
     }
 
     @Override

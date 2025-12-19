@@ -7,18 +7,19 @@ package com.github.fabriciofx.fake.server.db.server;
 import com.github.fabriciofx.fake.server.Script;
 import com.github.fabriciofx.fake.server.Server;
 import com.github.fabriciofx.fake.server.db.script.EmptySqlScript;
+import com.github.fabriciofx.fake.server.db.source.PgsqlSource;
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
+import javax.sql.DataSource;
+import org.cactoos.text.TextOf;
 import org.testcontainers.containers.JdbcDatabaseContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
  * PostgreSQL server, for unit testing.
  *
- * @since 0.2
+ * @since 0.0.1
  */
-public final class PgsqlServer implements Server<Connection> {
+public final class PgsqlServer implements Server<DataSource> {
     /**
      * The container.
      */
@@ -27,7 +28,7 @@ public final class PgsqlServer implements Server<Connection> {
     /**
      * SQL Script to initialize the database.
      */
-    private final Script<Connection> script;
+    private final Script<DataSource> script;
 
     /**
      * Ctor.
@@ -41,7 +42,7 @@ public final class PgsqlServer implements Server<Connection> {
      *
      * @param script SQL Script to initialize the database
      */
-    public PgsqlServer(final Script<Connection> script) {
+    public PgsqlServer(final Script<DataSource> script) {
         this.container = new PostgreSQLContainer<>("postgres:latest");
         this.script = script;
     }
@@ -58,9 +59,9 @@ public final class PgsqlServer implements Server<Connection> {
     }
 
     @Override
-    public Connection resource() throws Exception {
-        return DriverManager.getConnection(
-            this.container.getJdbcUrl(),
+    public DataSource resource() throws Exception {
+        return new PgsqlSource(
+            new TextOf(this.container.getJdbcUrl()),
             this.container.getUsername(),
             this.container.getPassword()
         );

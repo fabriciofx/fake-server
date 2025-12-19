@@ -18,7 +18,7 @@ import org.cactoos.text.FormattedText;
 import org.cactoos.text.Joined;
 
 /**
- * H2 datasource, for unit testing.
+ * H2 data source, for unit testing.
  *
  * @since 0.0.1
  */
